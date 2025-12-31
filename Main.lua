@@ -1,113 +1,106 @@
--- [[ FLICK HUB MONOLITH ]]
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- [[ UNX HUB: REBORN STABLE ]]
+local Success, Error = pcall(function()
+    local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- 1. Инициализация Глобальных Настроек (Защита от nil)
-getgenv().AimSettings = {Enabled = false, Fov = 150, Prediction = 0.165, StrafeEnabled = false, StrafeRadius = 10, TargetPart = "Head", ShowFov = true}
-getgenv().VisualSettings = {Enabled = false, Chams = false, Boxes = false, Names = true, Tracers = false, AliveColor = Color3.fromRGB(169, 112, 255)}
-getgenv().CombatSettings = {NoRecoil = false, NoReload = false}
+    -- 1. ГЛОБАЛЬНЫЕ НАСТРОЙКИ (Инициализируем ПЕРЕД всем)
+    getgenv().Tuff = {
+        Aim = {Enabled = false, Fov = 150, Prediction = 0.165, Strafe = false, Radius = 10, Speed = 5, Part = "Head"},
+        Vis = {Enabled = false, Chams = false, Boxes = false, Names = true, Color = Color3.fromRGB(169, 112, 255)},
+        Combat = {NoRecoil = false, NoReload = false}
+    }
 
--- 2. Создание окна
-local Window = Rayfield:CreateWindow({
-   Name = "UNX Hub | Flick Edition",
-   LoadingTitle = "Building Interface...",
-   LoadingSubtitle = "by Gemini",
-   ConfigurationSaving = { Enabled = false },
-   KeySystem = false
-})
+    local Window = Rayfield:CreateWindow({
+        Name = "UNX HUB | FLICK",
+        LoadingTitle = "Loading System...",
+        LoadingSubtitle = "Stable Version",
+        ConfigurationSaving = {Enabled = false},
+        KeySystem = false
+    })
 
--- 3. Создание вкладок
-local TabCombat = Window:CreateTab("Combat", 4483362458) 
-local TabVisuals = Window:CreateTab("Visuals", 4483345998)
-local TabMisc = Window:CreateTab("Misc", 4483362458)
+    -- 2. ВКЛАДКИ
+    local Tab1 = Window:CreateTab("Combat", 4483362458)
+    local Tab2 = Window:CreateTab("Visuals", 4483345998)
 
--- [[ ФУНКЦИИ COMBAT (Встраиваем сразу) ]]
-TabCombat:CreateSection("Aimbot & Flick")
+    -- 3. КНОПКИ (COMBAT)
+    Tab1:CreateSection("Aimbot")
+    Tab1:CreateToggle({
+        Name = "Flick Aimbot",
+        CurrentValue = false,
+        Callback = function(v) getgenv().Tuff.Aim.Enabled = v end
+    })
+    Tab1:CreateSlider({
+        Name = "FOV",
+        Range = {0, 500},
+        Increment = 10,
+        CurrentValue = 150,
+        Callback = function(v) getgenv().Tuff.Aim.Fov = v end
+    })
+    Tab1:CreateSection("Target Strafe")
+    Tab1:CreateToggle({
+        Name = "Enable Strafe",
+        CurrentValue = false,
+        Callback = function(v) getgenv().Tuff.Aim.Strafe = v end
+    })
 
-TabCombat:CreateToggle({
-   Name = "Enable Aimbot",
-   CurrentValue = false,
-   Flag = "AimToggle",
-   Callback = function(Value) getgenv().AimSettings.Enabled = Value end,
-})
+    -- 4. КНОПКИ (VISUALS)
+    Tab2:CreateSection("ESP")
+    Tab2:CreateToggle({
+        Name = "Master ESP",
+        CurrentValue = false,
+        Callback = function(v) getgenv().Tuff.Vis.Enabled = v end
+    })
+    Tab2:CreateToggle({
+        Name = "Chams (Wallhack)",
+        CurrentValue = false,
+        Callback = function(v) getgenv().Tuff.Vis.Chams = v end
+    })
 
-TabCombat:CreateSlider({
-   Name = "Aimbot FOV",
-   Range = {0, 500},
-   Increment = 10,
-   Suffix = "px",
-   CurrentValue = 150,
-   Flag = "FovSlider",
-   Callback = function(Value) getgenv().AimSettings.Fov = Value end,
-})
+    -- [[ ЛОГИКА АИМБОТА ]]
+    local Camera = workspace.CurrentCamera
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local RunService = game:GetService("RunService")
 
-TabCombat:CreateSection("Gun Mods")
+    local function GetTarget()
+        local closest, dist = nil, getgenv().Tuff.Aim.Fov
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 then
+                    local pos, onScreen = Camera:WorldToViewportPoint(p.Character.Head.Position)
+                    if onScreen then
+                        local mag = (Vector2.new(pos.X, pos.Y) - game:GetService("UserInputService"):GetMouseLocation()).Magnitude
+                        if mag < dist then
+                            dist = mag
+                            closest = p
+                        end
+                    end
+                end
+            end
+        end
+        return closest
+    end
 
-TabCombat:CreateToggle({
-   Name = "No Recoil",
-   CurrentValue = false,
-   Flag = "RecoilToggle",
-   Callback = function(Value) getgenv().CombatSettings.NoRecoil = Value end,
-})
+    RunService.RenderStepped:Connect(function()
+        if getgenv().Tuff.Aim.Enabled then
+            local target = GetTarget()
+            if target and game:GetService("UserInputService"):IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+                local pred = target.Character.HumanoidRootPart.Position + (target.Character.HumanoidRootPart.Velocity * getgenv().Tuff.Aim.Prediction)
+                Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, pred)
+                
+                -- Strafe logic
+                if getgenv().Tuff.Aim.Strafe then
+                    local t = tick() * getgenv().Tuff.Aim.Speed
+                    local lp_hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if lp_hrp then
+                        lp_hrp.CFrame = CFrame.lookAt(target.Character.HumanoidRootPart.Position + Vector3.new(math.cos(t)*10, 0, math.sin(t)*10), target.Character.HumanoidRootPart.Position)
+                    end
+                end
+            end
+        end
+    end)
+end)
 
-TabCombat:CreateToggle({
-   Name = "Infinite Ammo / No Reload",
-   CurrentValue = false,
-   Flag = "ReloadToggle",
-   Callback = function(Value) getgenv().CombatSettings.NoReload = Value end,
-})
-
--- [[ ФУНКЦИИ VISUALS ]]
-TabVisuals:CreateSection("ESP Options")
-
-TabVisuals:CreateToggle({
-   Name = "Master ESP",
-   CurrentValue = false,
-   Flag = "EspToggle",
-   Callback = function(Value) getgenv().VisualSettings.Enabled = Value end,
-})
-
-TabVisuals:CreateToggle({
-   Name = "Chams & Boxes",
-   CurrentValue = false,
-   Flag = "ChamsToggle",
-   Callback = function(Value) 
-      getgenv().VisualSettings.Chams = Value 
-      getgenv().VisualSettings.Boxes = Value
-   end,
-})
-
-TabVisuals:CreateColorPicker({
-    Name = "ESP Color",
-    Color = Color3.fromRGB(169, 112, 255),
-    Flag = "EspColor",
-    Callback = function(Value) getgenv().VisualSettings.AliveColor = Value end
-})
-
--- [[ ФУНКЦИИ MISC ]]
-TabMisc:CreateSection("Movement")
-
-TabMisc:CreateToggle({
-   Name = "Target Strafe",
-   CurrentValue = false,
-   Flag = "StrafeToggle",
-   Callback = function(Value) getgenv().AimSettings.StrafeEnabled = Value end,
-})
-
-TabMisc:CreateSlider({
-   Name = "Strafe Speed",
-   Range = {1, 20},
-   Increment = 1,
-   CurrentValue = 5,
-   Flag = "StrafeSpeed",
-   Callback = function(Value) getgenv().AimSettings.StrafeSpeed = Value end,
-})
-
--- [[ ЗАПУСК ФОНОВЫХ ЛОГИК (Чтобы всё работало) ]]
--- (Тут должны быть твои циклы из Aimbot.lua, Visuals.lua и Combat.lua)
--- Для теста я добавил уведомление:
-Rayfield:Notify({
-   Title = "UNX Loaded",
-   Content = "Интерфейс готов к работе!",
-   Duration = 5,
-   Image = 4483362458,
-})
+if not Success then
+    warn("HUB ERROR: " .. Error)
+end
