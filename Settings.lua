@@ -1,19 +1,22 @@
-getgenv().Tuff = {
+-- Инициализируем настройки глобально
+getgenv().TuffSettings = {
     Aim = {
-        Enabled = false, 
-        Fov = 150, 
-        Prediction = 0.165, 
-        Strafe = false, 
-        Radius = 12, 
+        Enabled = false,
+        Fov = 150,
+        Prediction = 0.165,
+        Strafe = false,
+        Radius = 12,
         Speed = 4
     },
-    Vis = {
-        Enabled = false, 
-        Chams = true, 
+    Visuals = {
+        Enabled = false,
+        Chams = true,
+        Names = true,
         Color = Color3.fromRGB(169, 112, 255)
     },
     Combat = {
-        NoRecoil = true
+        NoRecoil = false,
+        NoReload = false
     }
 }
-return getgenv().Tuff
+print("UNX: Settings Initialized")

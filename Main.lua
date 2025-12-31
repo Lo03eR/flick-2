@@ -1,52 +1,48 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- [[ ЗАГРУЗКА МОДУЛЕЙ ]]
--- loadstring(game:HttpGet("ТВОЯ_ССЫЛКА_НА_SETTINGS"))()
--- task.spawn(function() loadstring(game:HttpGet("ТВОЯ_ССЫЛКА_НА_VISUALS"))() end)
--- task.spawn(function() loadstring(game:HttpGet("ТВОЯ_ССЫЛКА_НА_AIMBOT"))() end)
+-- Безопасная функция для Callback
+local function SafeSet(tab, key, value)
+    if getgenv().TuffSettings and getgenv().TuffSettings[tab] then
+        getgenv().TuffSettings[tab][key] = value
+    else
+        warn("UNX Error: Settings not loaded yet!")
+    end
+end
 
 local Window = Rayfield:CreateWindow({
-   Name = "UNX HUB | FLICK EDITION",
-   LoadingTitle = "Loading Professional UI...",
-   LoadingSubtitle = "by Gemini",
-   ConfigurationSaving = { Enabled = true, Folder = "UNX_Configs" }
+   Name = "UNX HUB | FLICK",
+   LoadingTitle = "UNX ECOSYSTEM",
+   LoadingSubtitle = "Modular Fix",
+   ConfigurationSaving = { Enabled = false }
 })
 
-local TabCombat = Window:CreateTab("Combat", 4483362458)
-local TabVisuals = Window:CreateTab("Visuals", 4483345998)
+local TabCombat = Window:CreateTab("Combat")
+local TabVisuals = Window:CreateTab("Visuals")
 
--- [[ COMBAT UI ]]
+-- COMBAT
 TabCombat:CreateToggle({
-   Name = "Enable Flick Aimbot",
+   Name = "Enable Aimbot",
    CurrentValue = false,
-   Callback = function(Value) getgenv().TuffSettings.Aim.Enabled = Value end,
-})
-
-TabCombat:CreateSlider({
-   Name = "FOV Radius",
-   Range = {0, 600},
-   Increment = 10,
-   CurrentValue = 150,
-   Callback = function(Value) getgenv().TuffSettings.Aim.Fov = Value end,
+   Callback = function(v) SafeSet("Aim", "Enabled", v) end,
 })
 
 TabCombat:CreateToggle({
    Name = "Target Strafe",
    CurrentValue = false,
-   Callback = function(Value) getgenv().TuffSettings.Aim.Strafe = Value end,
+   Callback = function(v) SafeSet("Aim", "Strafe", v) end,
 })
 
--- [[ VISUALS UI ]]
+-- VISUALS
 TabVisuals:CreateToggle({
-   Name = "Master ESP (Chams)",
+   Name = "Master ESP",
    CurrentValue = false,
-   Callback = function(Value) getgenv().TuffSettings.Visuals.Enabled = Value end,
+   Callback = function(v) SafeSet("Visuals", "Enabled", v) end,
 })
 
 TabVisuals:CreateColorPicker({
     Name = "ESP Color",
     Color = Color3.fromRGB(169, 112, 255),
-    Callback = function(Value) getgenv().TuffSettings.Visuals.Color = Value end
+    Callback = function(v) SafeSet("Visuals", "Color", v) end
 })
 
-Rayfield:Notify({Title = "UNX Loaded", Content = "Full Modular System Active", Duration = 5})
+Rayfield:Notify({Title = "UNX Fixed", Content = "Callbacks are now safe.", Duration = 3})
