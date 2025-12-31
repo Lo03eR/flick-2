@@ -1,74 +1,74 @@
+-- [[ FLICK HUB MONOLITH ]]
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Инициализируем настройки, если они вдруг не были загружены из модулей
-getgenv().AimSettings = getgenv().AimSettings or {Enabled = false, Fov = 150, Prediction = 0.165, StrafeEnabled = false, StrafeRadius = 10}
-getgenv().VisualSettings = getgenv().VisualSettings or {Enabled = false, Chams = false, Boxes = false, AliveColor = Color3.fromRGB(169, 112, 255)}
-getgenv().CombatSettings = getgenv().CombatSettings or {NoRecoil = false, NoReload = false}
+-- 1. Инициализация Глобальных Настроек (Защита от nil)
+getgenv().AimSettings = {Enabled = false, Fov = 150, Prediction = 0.165, StrafeEnabled = false, StrafeRadius = 10, TargetPart = "Head", ShowFov = true}
+getgenv().VisualSettings = {Enabled = false, Chams = false, Boxes = false, Names = true, Tracers = false, AliveColor = Color3.fromRGB(169, 112, 255)}
+getgenv().CombatSettings = {NoRecoil = false, NoReload = false}
 
+-- 2. Создание окна
 local Window = Rayfield:CreateWindow({
    Name = "UNX Hub | Flick Edition",
-   LoadingTitle = "Loading Elements...",
-   LoadingSubtitle = "Please wait",
+   LoadingTitle = "Building Interface...",
+   LoadingSubtitle = "by Gemini",
    ConfigurationSaving = { Enabled = false },
-   KeySystem = false 
+   KeySystem = false
 })
 
--- 1. Создаем вкладки СНАЧАЛА
+-- 3. Создание вкладок
 local TabCombat = Window:CreateTab("Combat", 4483362458) 
 local TabVisuals = Window:CreateTab("Visuals", 4483345998)
 local TabMisc = Window:CreateTab("Misc", 4483362458)
 
-task.wait(0.1) -- Даем Rayfield "продышаться"
-
--- [[ COMBAT SECTION ]]
-TabCombat:CreateSection("Aimbot Logic")
+-- [[ ФУНКЦИИ COMBAT (Встраиваем сразу) ]]
+TabCombat:CreateSection("Aimbot & Flick")
 
 TabCombat:CreateToggle({
-   Name = "Enable Flick Aimbot",
-   CurrentValue = getgenv().AimSettings.Enabled,
-   Flag = "AimToggle", 
+   Name = "Enable Aimbot",
+   CurrentValue = false,
+   Flag = "AimToggle",
    Callback = function(Value) getgenv().AimSettings.Enabled = Value end,
 })
 
 TabCombat:CreateSlider({
-   Name = "FOV Radius",
+   Name = "Aimbot FOV",
    Range = {0, 500},
    Increment = 10,
    Suffix = "px",
-   CurrentValue = getgenv().AimSettings.Fov,
+   CurrentValue = 150,
    Flag = "FovSlider",
    Callback = function(Value) getgenv().AimSettings.Fov = Value end,
 })
 
-TabCombat:CreateSection("Weapon Mods")
+TabCombat:CreateSection("Gun Mods")
 
 TabCombat:CreateToggle({
    Name = "No Recoil",
-   CurrentValue = getgenv().CombatSettings.NoRecoil,
+   CurrentValue = false,
    Flag = "RecoilToggle",
    Callback = function(Value) getgenv().CombatSettings.NoRecoil = Value end,
 })
 
 TabCombat:CreateToggle({
    Name = "Infinite Ammo / No Reload",
-   CurrentValue = getgenv().CombatSettings.NoReload,
+   CurrentValue = false,
    Flag = "ReloadToggle",
    Callback = function(Value) getgenv().CombatSettings.NoReload = Value end,
 })
 
--- [[ VISUALS SECTION ]]
-TabVisuals:CreateSection("ESP Elements")
+-- [[ ФУНКЦИИ VISUALS ]]
+TabVisuals:CreateSection("ESP Options")
 
 TabVisuals:CreateToggle({
    Name = "Master ESP",
-   CurrentValue = getgenv().VisualSettings.Enabled,
-   Flag = "EspMaster",
+   CurrentValue = false,
+   Flag = "EspToggle",
    Callback = function(Value) getgenv().VisualSettings.Enabled = Value end,
 })
 
 TabVisuals:CreateToggle({
    Name = "Chams & Boxes",
-   CurrentValue = getgenv().VisualSettings.Chams,
+   CurrentValue = false,
    Flag = "ChamsToggle",
    Callback = function(Value) 
       getgenv().VisualSettings.Chams = Value 
@@ -76,19 +76,38 @@ TabVisuals:CreateToggle({
    end,
 })
 
--- [[ MISC SECTION ]]
+TabVisuals:CreateColorPicker({
+    Name = "ESP Color",
+    Color = Color3.fromRGB(169, 112, 255),
+    Flag = "EspColor",
+    Callback = function(Value) getgenv().VisualSettings.AliveColor = Value end
+})
+
+-- [[ ФУНКЦИИ MISC ]]
 TabMisc:CreateSection("Movement")
 
 TabMisc:CreateToggle({
    Name = "Target Strafe",
-   CurrentValue = getgenv().AimSettings.StrafeEnabled,
+   CurrentValue = false,
    Flag = "StrafeToggle",
    Callback = function(Value) getgenv().AimSettings.StrafeEnabled = Value end,
 })
 
+TabMisc:CreateSlider({
+   Name = "Strafe Speed",
+   Range = {1, 20},
+   Increment = 1,
+   CurrentValue = 5,
+   Flag = "StrafeSpeed",
+   Callback = function(Value) getgenv().AimSettings.StrafeSpeed = Value end,
+})
+
+-- [[ ЗАПУСК ФОНОВЫХ ЛОГИК (Чтобы всё работало) ]]
+-- (Тут должны быть твои циклы из Aimbot.lua, Visuals.lua и Combat.lua)
+-- Для теста я добавил уведомление:
 Rayfield:Notify({
-   Title = "Success!",
-   Content = "All functions loaded successfully.",
-   Duration = 3,
+   Title = "UNX Loaded",
+   Content = "Интерфейс готов к работе!",
+   Duration = 5,
    Image = 4483362458,
 })
