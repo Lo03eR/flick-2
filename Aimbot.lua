@@ -1,152 +1,58 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
--- [[ ГЛОБАЛЬНЫЕ НАСТРОЙКИ ]]
-getgenv().AimbotSettings = {
-    Enabled = false,
-    WallCheck = true,
-    Smoothing = 0.15, -- Плавность (0.1 - 1)
-    Prediction = 0.165, -- Для Flick идеально 0.165
-    Fov = 150,
-    TargetPart = "Head",
-    Strafe = false
-}
-
--- [[ ПЕРЕМЕННЫЕ СИСТЕМЫ ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- [[ ЛОГИКА ПРОВЕРКИ СТЕН (ИЗ ТВОЕГО ПРИМЕРА) ]]
-local function IsVisible(targetPart)
-    if not getgenv().AimbotSettings.WallCheck then return true end
-    local char = LocalPlayer.Character
-    if not char then return false end
-    
+-- Логика FOV Circle (как в твоем примере)
+local FOV_Ring = Drawing.new("Circle")
+FOV_Ring.Thickness = 1.5
+FOV_Ring.Filled = false
+FOV_Ring.Transparency = 0.8
+
+local function IsVisible(targetPart, char)
+    if not getgenv().TuffConfig.Aim.WallCheck then return true end
     local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {char, targetPart.Parent}
-    
+    params.FilterDescendantsInstances = {LocalPlayer.Character}
     local result = workspace:Raycast(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 1000, params)
-    return result == nil
+    return result == nil or result.Instance:IsDescendantOf(char)
 end
 
--- [[ ПОИСК БЛИЖАЙШЕЙ ЦЕЛИ К КУРСОРУ ]]
-local function GetClosestPlayer()
-    local target = nil
-    local shortestDistance = getgenv().AimbotSettings.Fov
-    local mouseLoc = UserInputService:GetMouseLocation()
-
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(getgenv().AimbotSettings.TargetPart) then
-            local hum = v.Character:FindFirstChildOfClass("Humanoid")
-            if hum and hum.Health > 0 and v.Team ~= LocalPlayer.Team then
-                local part = v.Character[getgenv().AimbotSettings.TargetPart]
-                local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                
-                if onScreen and IsVisible(part) then
-                    local distance = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
-                    if distance < shortestDistance then
-                        shortestDistance = distance
-                        target = v
-                    end
-                end
+local function GetTarget()
+    local target, dist = nil, getgenv().TuffConfig.Aim.Fov
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            local head = p.Character.Head
+            local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            if onScreen and IsVisible(head, p.Character) then
+                local mDist = (Vector2.new(screenPos.X, screenPos.Y) - UserInputService:GetMouseLocation()).Magnitude
+                if mDist < dist then dist = mDist; target = p end
             end
         end
     end
     return target
 end
 
--- [[ ОСНОВНОЙ ЦИКЛ ОБНОВЛЕНИЯ ]]
 RunService.RenderStepped:Connect(function()
-    if not getgenv().AimbotSettings.Enabled then return end
-    
-    local target = GetClosestPlayer()
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local settings = getgenv().AimbotSettings
-        local targetPart = target.Character[settings.TargetPart]
-        local velocity = target.Character.HumanoidRootPart.Velocity
-        
-        -- Расчет Предикта (как в твоем примере)
-        local predictedPos = targetPart.Position + (velocity * settings.Prediction)
-        
-        -- Плавная наводка
-        local lookAt = CFrame.lookAt(Camera.CFrame.Position, predictedPos)
-        Camera.CFrame = Camera.CFrame:Lerp(lookAt, settings.Smoothing)
-        
-        -- Если включен стрейф
-        if settings.Strafe and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local myHrp = LocalPlayer.Character.HumanoidRootPart
-            local t = tick() * 5
-            local orbit = target.Character.HumanoidRootPart.Position + Vector3.new(math.cos(t) * 12, 4, math.sin(t) * 12)
-            myHrp.Velocity = (orbit - myHrp.Position).Unit * 55
+    local cfg = getgenv().TuffConfig.Aim
+    FOV_Ring.Visible = cfg.ShowFov
+    FOV_Ring.Radius = cfg.Fov
+    FOV_Ring.Position = UserInputService:GetMouseLocation()
+    FOV_Ring.Color = cfg.RainbowFov and Color3.fromHSV(tick()%5/5, 1, 1) or Color3.new(1,1,1)
+
+    if cfg.Enabled then
+        local t = GetTarget()
+        if t and t.Character then
+            local aimPart = t.Character:FindFirstChild(cfg.Part)
+            local vel = t.Character.HumanoidRootPart.Velocity
+            local predicted = aimPart.Position + (vel * cfg.Prediction)
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, predicted), cfg.Smooth)
+            
+            -- AutoFire (из твоей логики Flick)
+            if cfg.AutoFire then
+                local rem = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+                if rem and rem:FindFirstChild("CheckFire") then rem.CheckFire:FireServer() end
+            end
         end
     end
 end)
-
--- [[ ИНТЕРФЕЙС RAYFIELD ]]
-local Window = Rayfield:CreateWindow({
-   Name = "UNX HUB | RAYFIELD EDITION",
-   LoadingTitle = "Initializing Aim Engine...",
-   LoadingSubtitle = "Based on Obsidian Logic",
-})
-
-local MainTab = Window:CreateTab("Combat", 4483362458)
-
-MainTab:CreateSection("Aimbot Main")
-
-MainTab:CreateToggle({
-   Name = "Enable Aimbot",
-   CurrentValue = false,
-   Callback = function(Value) getgenv().AimbotSettings.Enabled = Value end,
-})
-
-MainTab:CreateToggle({
-   Name = "Wall Check",
-   CurrentValue = true,
-   Callback = function(Value) getgenv().AimbotSettings.WallCheck = Value end,
-})
-
-MainTab:CreateDropdown({
-   Name = "Target Part",
-   Options = {"Head", "HumanoidRootPart"},
-   CurrentOption = "Head",
-   Callback = function(Option) getgenv().AimbotSettings.TargetPart = Option[1] end,
-})
-
-MainTab:CreateSection("Aimbot Settings")
-
-MainTab:CreateSlider({
-   Name = "Field of View",
-   Range = {0, 800},
-   Increment = 10,
-   CurrentValue = 150,
-   Callback = function(Value) getgenv().AimbotSettings.Fov = Value end,
-})
-
-MainTab:CreateSlider({
-   Name = "Prediction Amount",
-   Range = {0, 1000},
-   Increment = 1,
-   CurrentValue = 165,
-   Callback = function(Value) getgenv().AimbotSettings.Prediction = Value / 1000 end,
-})
-
-MainTab:CreateSlider({
-   Name = "Smoothing (Lower is slower)",
-   Range = {1, 100},
-   Increment = 1,
-   CurrentValue = 15,
-   Callback = function(Value) getgenv().AimbotSettings.Smoothing = Value / 100 end,
-})
-
-MainTab:CreateSection("Misc")
-
-MainTab:CreateToggle({
-   Name = "Target Strafe",
-   CurrentValue = false,
-   Callback = function(Value) getgenv().AimbotSettings.Strafe = Value end,
-})
-
-Rayfield:Notify({Title = "Ready", Content = "Аимбот на логике Obsidian загружен!", Duration = 3})

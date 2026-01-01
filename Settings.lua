@@ -1,21 +1,16 @@
-getgenv().TuffSettings = {
+getgenv().TuffConfig = {
     Aim = {
-        Enabled = false,
-        Fov = 150,
-        Prediction = 0.165,
-        WallCheck = true, -- НОВАЯ ФУНКЦИЯ
-        Strafe = false,
-        Radius = 12,
-        Speed = 4
+        Enabled = false, Smooth = 0.15, Fov = 150, Part = "Head", 
+        WallCheck = true, Prediction = 0.165, AutoFire = false,
+        ShowFov = true, RainbowFov = false
     },
     Visuals = {
-        Enabled = false,
-        Chams = true,
-        Names = true,
-        Color = Color3.fromRGB(169, 112, 255)
+        Enabled = false, Boxes = false, Tracers = false, 
+        Names = false, Distance = false, FullBright = false,
+        RainbowESP = false, Outline = false
     },
     Misc = {
-        WalkSpeed = 16,
-        InfJump = false
+        WalkSpeed = 20, BunnyHop = false, XRay = false,
+        NoFog = false, AutoRespawn = false
     }
 }
