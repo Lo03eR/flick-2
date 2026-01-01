@@ -3,9 +3,9 @@ local Window = Library:CreateWindow({ Title = "TUFF HUB | FLICK", Footer = "Vers
 
 -- ЗАГРУЗКА МОДУЛЕЙ
 task.spawn(function()
-    loadstring(game:HttpGet("ССЫЛКА_НА_SETTINGS.LUA"))()
-    loadstring(game:HttpGet("ССЫЛКА_НА_AIMBOT.LUA"))()
-    -- Добавь сюда Visuals.lua когда создашь
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Lo03eR/flick-2/refs/heads/main/Settings.lua"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Lo03eR/flick-2/refs/heads/main/Aimbot.lua"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Lo03eR/flick-2/refs/heads/main/Visuals.lua"))()
 end)
 
 local Tabs = { Main = Window:AddTab("Combat", "crosshair"), Visuals = Window:AddTab("Visuals", "eye") }
